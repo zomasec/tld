@@ -1,5 +1,4 @@
-// Package main provides functionality for parsing URLs and extracting subdomains, domain, TLD, and port.
-package main
+package tld
 
 import (
 	"fmt"
@@ -12,21 +11,25 @@ import (
 // URL embeds net/url.URL and adds additional fields for subdomains, domain, TLD, and port.
 type URL struct {
 	*url.URL
-	// Subdomains holds the subdomains extracted from the URL.
 	Subdomains []string
-	// Domain holds the main domain extracted from the URL.
-	Domain string
-	// TLD holds the top-level domain extracted from the URL.
-	TLD string
-	// Port holds the port number extracted from the URL, if present.
-	Port string
+	Domain     string
+	TLD        string
+	Port       string
 }
 
-// Parse parses the input URL string and returns a tld.URL, which contains extra fields for subdomains, domain, TLD, and port.
+// Parse parses the input URL string or domain and returns a tld.URL, which contains extra fields for subdomains, domain, TLD, and port.
 func Parse(s string) (*URL, error) {
-	u, err := url.Parse(s)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL: %v", err)
+	var u *url.URL
+	var err error
+
+	// Check if the input contains scheme (http:// or https://)
+	if strings.Contains(s, "://") {
+		u, err = url.Parse(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse URL: %v", err)
+		}
+	} else {
+		u = &url.URL{Host: s}
 	}
 
 	if u.Host == "" {
@@ -57,19 +60,17 @@ func Parse(s string) (*URL, error) {
 	}, nil
 }
 
-// extractSubdomains extracts subdomains from the full domain name.
 func extractSubdomains(fullDomain, etldPlusOne string) []string {
 	var subdomains []string
 	if fullDomain != etldPlusOne {
 		subdomainParts := strings.Split(fullDomain, ".")
-		for i := 0; i < len(subdomainParts)-3; i++ {
+		for i := 0; i < len(subdomainParts)-2; i++ {
 			subdomains = append(subdomains, subdomainParts[i])
 		}
 	}
 	return subdomains
 }
 
-// parseHost extracts the domain and port from the host part of a URL.
 func parseHost(host string) (string, string) {
 	for i := len(host) - 1; i >= 0; i-- {
 		if host[i] == ':' {
@@ -80,4 +81,3 @@ func parseHost(host string) (string, string) {
 	}
 	return host, ""
 }
-
