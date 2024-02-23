@@ -1,4 +1,5 @@
-package tld
+// Package main provides functionality for parsing URLs and extracting subdomains, domain, TLD, and port.
+package main
 
 import (
 	"fmt"
@@ -11,64 +12,85 @@ import (
 // URL embeds net/url.URL and adds additional fields for subdomains, domain, TLD, and port.
 type URL struct {
 	*url.URL
-	Subdomains []string // Subdomains of the URL.
-	Domain     string   // Domain of the URL.
-	TLD        string   // Top-level domain of the URL.
-	Port       string   // Port of the URL.
+	// Subdomains holds the subdomains extracted from the URL.
+	Subdomains []string
+	// Domain holds the main domain extracted from the URL.
+	Domain string
+	// TLD holds the top-level domain extracted from the URL.
+	TLD string
+	// Port holds the port number extracted from the URL, if present.
+	Port string
 }
 
 // Parse parses the input URL string and returns a tld.URL, which contains extra fields for subdomains, domain, TLD, and port.
 func Parse(s string) (*URL, error) {
 	u, err := url.Parse(s)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL: %w", err)
+		return nil, fmt.Errorf("failed to parse URL: %v", err)
 	}
 
 	if u.Host == "" {
 		return &URL{URL: u}, nil
 	}
 
-	subdomains, domain, port := parseHost(u.Host)
+	domain, port := parseHost(u.Host)
 	etldPlusOne, err := publicsuffix.EffectiveTLDPlusOne(domain)
 	if err != nil {
-		return nil, fmt.Errorf("failed to determine effective TLD+1: %w", err)
+		return nil, fmt.Errorf("failed to determine effective TLD+1: %v", err)
 	}
+
+	subdomains := extractSubdomains(domain, etldPlusOne)
+
+	i := strings.Index(etldPlusOne, ".")
+	if i < 0 {
+		return nil, fmt.Errorf("failed to extract domain and TLD from URL: %s", s)
+	}
+	domainName := etldPlusOne[:i]
+	tld := etldPlusOne[i+1:]
 
 	return &URL{
 		URL:        u,
 		Subdomains: subdomains,
-		Domain:     domain,
-		TLD:        strings.TrimPrefix(etldPlusOne, domain+"."),
+		Domain:     domainName,
+		TLD:        tld,
 		Port:       port,
 	}, nil
 }
 
-// parseHost parses the host part of a URL and returns the subdomains, domain, and port.
-func parseHost(host string) ([]string, string, string) {
+// extractSubdomains extracts subdomains from the full domain name.
+func extractSubdomains(fullDomain, etldPlusOne string) []string {
 	var subdomains []string
-	var domain, port string
-
-	parts := strings.Split(host, ":")
-	if len(parts) > 1 {
-		host = parts[0] // Extract host without port
-		port = parts[1]
-	}
-
-	subdomainParts := strings.Split(host, ".")
-	for i := len(subdomainParts) - 1; i >= 0; i-- {
-		if subdomainParts[i] != "" {
+	if fullDomain != etldPlusOne {
+		subdomainParts := strings.Split(fullDomain, ".")
+		for i := 0; i < len(subdomainParts)-3; i++ {
 			subdomains = append(subdomains, subdomainParts[i])
 		}
 	}
+	return subdomains
+}
 
-	if len(subdomains) > 0 {
-		domain = subdomains[0]
-		if len(subdomains) > 1 {
-			domain = subdomains[1] + "." + domain
-			subdomains = subdomains[2:]
-		} else {
-			subdomains = nil
+// parseHost extracts the domain and port from the host part of a URL.
+func parseHost(host string) (string, string) {
+	for i := len(host) - 1; i >= 0; i-- {
+		if host[i] == ':' {
+			return host[:i], host[i+1:]
+		} else if host[i] < '0' || host[i] > '9' {
+			return host, ""
 		}
 	}
-	return subdomains, domain, port
+	return host, ""
+}
+
+func main() {
+	urlString := "https://subdomain1.subdomain2.example.com.eg:8080/path/to/resource"
+	parsedURL, err := Parse(urlString)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	fmt.Println("Subdomains:", parsedURL.Subdomains)
+	fmt.Println("Domain:", parsedURL.Domain)
+	fmt.Println("TLD:", parsedURL.TLD)
+	fmt.Println("Port:", parsedURL.Port)
 }
