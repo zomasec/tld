@@ -39,7 +39,7 @@ import (
 )
 
 func main() {
-	urlString := "https://subdomain1.subdomain2.example.com:8080/path/to/resource"
+	urlString := "https://subdomain1.subdomain2.example.com:8080/path/to/resource" // or you can use "subdomain1.subdomain2.subdomain3.example.com"
 	parsedURL, err := tld.Parse(urlString)
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -47,6 +47,7 @@ func main() {
 	}
 
 	fmt.Println("Subdomains:", parsedURL.Subdomains)
+	fmt.Println("Subdomain:", parsedURL.Subdomain)
 	fmt.Println("Domain:", parsedURL.Domain)
 	fmt.Println("TLD:", parsedURL.TLD)
 	fmt.Println("Port:", parsedURL.Port)
