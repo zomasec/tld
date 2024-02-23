@@ -1,4 +1,4 @@
-package tld
+package main
 
 import (
 	"fmt"
