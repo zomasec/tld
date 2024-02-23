@@ -81,16 +81,3 @@ func parseHost(host string) (string, string) {
 	return host, ""
 }
 
-func main() {
-	urlString := "https://subdomain1.subdomain2.example.com.eg:8080/path/to/resource"
-	parsedURL, err := Parse(urlString)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-
-	fmt.Println("Subdomains:", parsedURL.Subdomains)
-	fmt.Println("Domain:", parsedURL.Domain)
-	fmt.Println("TLD:", parsedURL.TLD)
-	fmt.Println("Port:", parsedURL.Port)
-}
