@@ -1,4 +1,4 @@
-package tld
+package main
 
 import (
 	"fmt"
@@ -12,6 +12,7 @@ import (
 type URL struct {
 	*url.URL
 	Subdomains []string
+	Subdomain  string
 	Domain     string
 	TLD        string
 	Port       string
@@ -21,6 +22,7 @@ type URL struct {
 func Parse(s string) (*URL, error) {
 	var u *url.URL
 	var err error
+	var subdomain string
 
 	// Check if the input contains scheme (http:// or https://)
 	if strings.Contains(s, "://") {
@@ -42,6 +44,10 @@ func Parse(s string) (*URL, error) {
 		return nil, fmt.Errorf("failed to determine effective TLD+1: %v", err)
 	}
 
+	if rest := strings.TrimSuffix(domain, "."+etldPlusOne); rest != domain {
+		subdomain = rest
+	}
+
 	subdomains := extractSubdomains(domain, etldPlusOne)
 
 	i := strings.Index(etldPlusOne, ".")
@@ -54,6 +60,7 @@ func Parse(s string) (*URL, error) {
 	return &URL{
 		URL:        u,
 		Subdomains: subdomains,
+		Subdomain:  subdomain,
 		Domain:     domainName,
 		TLD:        tld,
 		Port:       port,
