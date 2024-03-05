@@ -1,4 +1,4 @@
-module tld
+module github.com/zomasec/tld
 
 go 1.22.0
 
