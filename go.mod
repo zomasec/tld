@@ -1,8 +1,11 @@
-module github.com/zomasec/tld
+module tld
 
-go 1.22.0
+go 1.22.2
 
-require golang.org/x/net v0.21.0
+require (
+	github.com/stretchr/testify v1.9.0
+	golang.org/x/net v0.24.0
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect

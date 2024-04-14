@@ -2,7 +2,7 @@ package tld
 
 import (
 	"fmt"
-	"testify/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
